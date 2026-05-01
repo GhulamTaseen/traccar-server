@@ -23,6 +23,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.time.Duration;
+import java.util.Map;
 import org.traccar.api.BaseResource;
 import org.traccar.config.Config;
 import org.traccar.config.Keys;
@@ -60,6 +64,28 @@ public class HealthResource extends BaseResource {
         } catch (Exception ignore) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).build();
         }
+    }
+
+    @PermitAll
+    @GET
+    @Path("details")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, Object> details() throws StorageException {
+        checkMessages();
+        checkDatabase();
+        RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
+        Runtime memory = Runtime.getRuntime();
+        String version = getClass().getPackage().getImplementationVersion();
+        return Map.of(
+                "status", "OK",
+                "version", version != null ? version : "Unknown",
+                "startTime", runtime.getStartTime(),
+                "uptime", runtime.getUptime(),
+                "uptimeText", Duration.ofMillis(runtime.getUptime()).toString(),
+                "javaVersion", runtime.getVmVersion(),
+                "memoryUsed", memory.totalMemory() - memory.freeMemory(),
+                "memoryTotal", memory.totalMemory(),
+                "memoryMax", memory.maxMemory());
     }
 
     private void checkMessages() {

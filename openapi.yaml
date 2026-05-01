@@ -92,6 +92,23 @@ paths:
         '500':
           description: Service is unavailable
           content: {}
+  /health/details:
+    get:
+      summary: Check detailed server health
+      description: Return JSON health details for monitoring dashboards
+      tags:
+        - Health
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthDetails'
+        '500':
+          description: Service is unavailable
+          content: {}
   /commands:
     get:
       summary: Fetch a list of Saved Commands
@@ -2563,6 +2580,42 @@ components:
         messagesStored:
           type: integer
           description: Number of device messages stored to the database
+    HealthDetails:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Server health status
+          example: OK
+        version:
+          type: string
+          description: Server version
+        startTime:
+          type: integer
+          format: int64
+          description: JVM start timestamp in milliseconds
+        uptime:
+          type: integer
+          format: int64
+          description: JVM uptime in milliseconds
+        uptimeText:
+          type: string
+          description: ISO-8601 uptime duration
+        javaVersion:
+          type: string
+          description: JVM version
+        memoryUsed:
+          type: integer
+          format: int64
+          description: Used JVM memory in bytes
+        memoryTotal:
+          type: integer
+          format: int64
+          description: Allocated JVM memory in bytes
+        memoryMax:
+          type: integer
+          format: int64
+          description: Maximum JVM memory in bytes
     DeviceAccumulators:
       type: object
       properties:
