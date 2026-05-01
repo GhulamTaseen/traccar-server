@@ -19,13 +19,13 @@ import org.traccar.config.Config;
 @Path("xml")
 public class Xml {
 
-    @Inject
-    public Config config;
+    private final Config config;
 
     @Inject
     public Xml(Config config) {
         this.config = config;
     }
+
     private File getConfigFile() {
         return new File(config.getString("config.file", "./conf/traccar.xml"));
     }
