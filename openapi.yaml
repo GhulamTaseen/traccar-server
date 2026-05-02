@@ -1378,7 +1378,7 @@ paths:
   /reports/driver-score:
     get:
       summary: Fetch driver performance scores
-      description: Calculates distance-normalized scores from hard acceleration, hard braking, and hard cornering alarm events
+      description: Calculates configurable distance-normalized scores from hard acceleration, hard braking, and hard cornering alarm events
       tags:
         - Reports
       parameters:
@@ -2544,16 +2544,16 @@ components:
           description: Total scored driving behavior events
         riskScore:
           type: number
-          description: Weighted risk points before distance normalization
+          description: Configurable weighted risk points before distance normalization
         eventsPer100Km:
           type: number
           description: Total scored events normalized per 100 km
         riskPer100Km:
           type: number
-          description: Weighted risk points normalized per 100 km
+          description: Configurable weighted risk points normalized per 100 km
         score:
           type: integer
-          description: Driver performance score from 0 to 100 using weighted risk per 100 km
+          description: Driver performance score from 0 to 100 using configurable weighted risk per 100 km
     ReportTrips:
       type: object
       properties:

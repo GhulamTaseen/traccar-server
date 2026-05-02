@@ -16,6 +16,8 @@
 package org.traccar.reports;
 
 import jakarta.inject.Inject;
+import org.traccar.config.Config;
+import org.traccar.config.Keys;
 import org.traccar.helper.model.DeviceUtil;
 import org.traccar.helper.model.PositionUtil;
 import org.traccar.model.Device;
@@ -42,11 +44,13 @@ public class DriverScoreReportProvider {
 
     private final ReportUtils reportUtils;
     private final Storage storage;
+    private final Config config;
 
     @Inject
-    public DriverScoreReportProvider(ReportUtils reportUtils, Storage storage) {
+    public DriverScoreReportProvider(ReportUtils reportUtils, Storage storage, Config config) {
         this.reportUtils = reportUtils;
         this.storage = storage;
+        this.config = config;
     }
 
     private List<Event> getEvents(long deviceId, Date from, Date to) throws StorageException {
@@ -109,7 +113,13 @@ public class DriverScoreReportProvider {
         String key = device.getId() + ":" + (driverUniqueId != null ? driverUniqueId : NO_DRIVER);
         DriverScoreReportItem item = items.get(key);
         if (item == null) {
-            item = new DriverScoreReportItem();
+            item = new DriverScoreReportItem(
+                    config.getDouble(Keys.REPORT_DRIVER_SCORE_ACCELERATION_WEIGHT),
+                    config.getDouble(Keys.REPORT_DRIVER_SCORE_BRAKING_WEIGHT),
+                    config.getDouble(Keys.REPORT_DRIVER_SCORE_CORNERING_WEIGHT),
+                    config.getDouble(Keys.REPORT_DRIVER_SCORE_NORMALIZED_RISK_PENALTY),
+                    config.getDouble(Keys.REPORT_DRIVER_SCORE_FALLBACK_RISK_PENALTY),
+                    config.getDouble(Keys.REPORT_DRIVER_SCORE_MINIMUM_DISTANCE));
             item.setDeviceId(device.getId());
             item.setDeviceName(device.getName());
             item.setDriverUniqueId(driverUniqueId);

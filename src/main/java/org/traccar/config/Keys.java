@@ -1387,6 +1387,54 @@ public final class Keys {
             false);
 
     /**
+     * Driver score weight for harsh acceleration events.
+     */
+    public static final ConfigKey<Double> REPORT_DRIVER_SCORE_ACCELERATION_WEIGHT = new DoubleConfigKey(
+            "report.driverScore.accelerationWeight",
+            List.of(KeyType.CONFIG),
+            1.0);
+
+    /**
+     * Driver score weight for harsh braking events.
+     */
+    public static final ConfigKey<Double> REPORT_DRIVER_SCORE_BRAKING_WEIGHT = new DoubleConfigKey(
+            "report.driverScore.brakingWeight",
+            List.of(KeyType.CONFIG),
+            1.5);
+
+    /**
+     * Driver score weight for harsh cornering events.
+     */
+    public static final ConfigKey<Double> REPORT_DRIVER_SCORE_CORNERING_WEIGHT = new DoubleConfigKey(
+            "report.driverScore.corneringWeight",
+            List.of(KeyType.CONFIG),
+            1.3);
+
+    /**
+     * Driver score penalty multiplier applied to weighted risk per 100 km.
+     */
+    public static final ConfigKey<Double> REPORT_DRIVER_SCORE_NORMALIZED_RISK_PENALTY = new DoubleConfigKey(
+            "report.driverScore.normalizedRiskPenalty",
+            List.of(KeyType.CONFIG),
+            2.0);
+
+    /**
+     * Driver score penalty multiplier when distance is not available.
+     */
+    public static final ConfigKey<Double> REPORT_DRIVER_SCORE_FALLBACK_RISK_PENALTY = new DoubleConfigKey(
+            "report.driverScore.fallbackRiskPenalty",
+            List.of(KeyType.CONFIG),
+            5.0);
+
+    /**
+     * Minimum distance in meters used for driver score normalization.
+     */
+    public static final ConfigKey<Double> REPORT_DRIVER_SCORE_MINIMUM_DISTANCE = new DoubleConfigKey(
+            "report.driverScore.minimumDistance",
+            List.of(KeyType.CONFIG),
+            10000.0);
+
+    /**
      * Boolean flag to enable or disable position filtering.
      */
     public static final ConfigKey<Boolean> FILTER_ENABLE = new BooleanConfigKey(
