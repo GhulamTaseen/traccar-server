@@ -26,6 +26,7 @@ import org.traccar.model.Report;
 import org.traccar.model.UserRestrictions;
 import org.traccar.reports.CombinedReportProvider;
 import org.traccar.reports.DevicesReportProvider;
+import org.traccar.reports.DriverScoreReportProvider;
 import org.traccar.reports.EventsReportProvider;
 import org.traccar.reports.RouteReportProvider;
 import org.traccar.reports.StopsReportProvider;
@@ -34,6 +35,7 @@ import org.traccar.reports.TripsReportProvider;
 import org.traccar.reports.common.ReportExecutor;
 import org.traccar.reports.common.ReportMailer;
 import org.traccar.reports.model.CombinedReportItem;
+import org.traccar.reports.model.DriverScoreReportItem;
 import org.traccar.reports.model.StopReportItem;
 import org.traccar.reports.model.SummaryReportItem;
 import org.traccar.reports.model.TripReportItem;
@@ -83,6 +85,9 @@ public class ReportResource extends SimpleObjectResource<Report> {
 
     @Inject
     private DevicesReportProvider devicesReportProvider;
+
+    @Inject
+    private DriverScoreReportProvider driverScoreReportProvider;
 
     @Inject
     private ReportMailer reportMailer;
@@ -210,6 +215,18 @@ public class ReportResource extends SimpleObjectResource<Report> {
             @QueryParam("to") Date to,
             @PathParam("type") String type) throws StorageException {
         return getEventsExcel(deviceIds, groupIds, types, alarms, from, to, type.equals("mail"));
+    }
+
+    @Path("driver-score")
+    @GET
+    public Collection<DriverScoreReportItem> getDriverScore(
+            @QueryParam("deviceId") List<Long> deviceIds,
+            @QueryParam("groupId") List<Long> groupIds,
+            @QueryParam("from") Date from,
+            @QueryParam("to") Date to) throws StorageException {
+        permissionsService.checkRestriction(getUserId(), UserRestrictions::getDisableReports);
+        actionLogger.report(request, getUserId(), false, "driver-score", from, to, deviceIds, groupIds);
+        return driverScoreReportProvider.getObjects(getUserId(), deviceIds, groupIds, from, to);
     }
 
     @Path("summary")
