@@ -18,12 +18,24 @@ package org.traccar.reports.model;
 public class DriverScoreReportItem {
 
     private static final double DEFAULT_SCORE = 100.0;
-    private static final double MINIMUM_NORMALIZED_DISTANCE = 10000.0;
-    private static final double ACCELERATION_WEIGHT = 1.0;
-    private static final double BRAKING_WEIGHT = 1.5;
-    private static final double CORNERING_WEIGHT = 1.3;
-    private static final double NORMALIZED_RISK_PENALTY = 2.0;
-    private static final double FALLBACK_RISK_PENALTY = 5.0;
+
+    public DriverScoreReportItem(
+            double accelerationWeight, double brakingWeight, double corneringWeight,
+            double normalizedRiskPenalty, double fallbackRiskPenalty, double minimumDistance) {
+        this.accelerationWeight = accelerationWeight;
+        this.brakingWeight = brakingWeight;
+        this.corneringWeight = corneringWeight;
+        this.normalizedRiskPenalty = normalizedRiskPenalty;
+        this.fallbackRiskPenalty = fallbackRiskPenalty;
+        this.minimumDistance = minimumDistance;
+    }
+
+    private final double accelerationWeight;
+    private final double brakingWeight;
+    private final double corneringWeight;
+    private final double normalizedRiskPenalty;
+    private final double fallbackRiskPenalty;
+    private final double minimumDistance;
 
     private long deviceId;
 
@@ -122,21 +134,21 @@ public class DriverScoreReportItem {
     }
 
     public double getRiskScore() {
-        return harshAccelerationCount * ACCELERATION_WEIGHT
-                + harshBrakingCount * BRAKING_WEIGHT
-                + harshCorneringCount * CORNERING_WEIGHT;
+        return harshAccelerationCount * accelerationWeight
+                + harshBrakingCount * brakingWeight
+                + harshCorneringCount * corneringWeight;
     }
 
     public double getEventsPer100Km() {
         if (distance > 0.0) {
-            return getTotalEvents() * 100000.0 / Math.max(distance, MINIMUM_NORMALIZED_DISTANCE);
+            return getTotalEvents() * 100000.0 / Math.max(distance, minimumDistance);
         }
         return 0.0;
     }
 
     public double getRiskPer100Km() {
         if (distance > 0.0) {
-            return getRiskScore() * 100000.0 / Math.max(distance, MINIMUM_NORMALIZED_DISTANCE);
+            return getRiskScore() * 100000.0 / Math.max(distance, minimumDistance);
         }
         return 0.0;
     }
@@ -144,9 +156,9 @@ public class DriverScoreReportItem {
     public int getScore() {
         double penalty;
         if (distance > 0.0) {
-            penalty = getRiskPer100Km() * NORMALIZED_RISK_PENALTY;
+            penalty = getRiskPer100Km() * normalizedRiskPenalty;
         } else {
-            penalty = getRiskScore() * FALLBACK_RISK_PENALTY;
+            penalty = getRiskScore() * fallbackRiskPenalty;
         }
         return (int) Math.round(Math.max(0.0, DEFAULT_SCORE - penalty));
     }
