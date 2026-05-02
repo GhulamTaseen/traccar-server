@@ -86,6 +86,12 @@ public class ReportResource extends SimpleObjectResource<Report> {
     @Inject
     private DevicesReportProvider devicesReportProvider;
 
+    private void checkPeriod(Date from, Date to) {
+        if (from == null || to == null) {
+            throw new WebApplicationException("Report period is required", Response.Status.BAD_REQUEST);
+        }
+    }
+
     @Inject
     private DriverScoreReportProvider driverScoreReportProvider;
 
@@ -225,6 +231,7 @@ public class ReportResource extends SimpleObjectResource<Report> {
             @QueryParam("from") Date from,
             @QueryParam("to") Date to) throws StorageException {
         permissionsService.checkRestriction(getUserId(), UserRestrictions::getDisableReports);
+        checkPeriod(from, to);
         actionLogger.report(request, getUserId(), false, "driver-score", from, to, deviceIds, groupIds);
         return driverScoreReportProvider.getObjects(getUserId(), deviceIds, groupIds, from, to);
     }
