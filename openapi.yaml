@@ -1375,6 +1375,52 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Event'
+  /reports/driver-score:
+    get:
+      summary: Fetch driver performance scores
+      description: Calculates scores from hard acceleration, hard braking, and hard cornering alarm events
+      tags:
+        - Reports
+      parameters:
+        - name: deviceId
+          in: query
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: groupId
+          in: query
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: from
+          in: query
+          description: in ISO 8601 format. eg. `1963-11-22T18:30:00Z`
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: in ISO 8601 format. eg. `1963-11-22T18:30:00Z`
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportDriverScore'
   /reports/summary:
     get:
       summary: >-
@@ -2465,6 +2511,37 @@ components:
         engineHours:
           type: integer
           description: Engine hours accumulated for the report period
+    ReportDriverScore:
+      type: object
+      properties:
+        deviceId:
+          type: integer
+          format: int64
+          description: Device identifier for the score row
+        deviceName:
+          type: string
+          description: Human readable device name
+        driverUniqueId:
+          type: string
+          description: Unique identifier of the driver assigned to matching events
+        driverName:
+          type: string
+          description: Name of the driver assigned to matching events
+        harshAccelerationCount:
+          type: integer
+          description: Number of hard acceleration events
+        harshBrakingCount:
+          type: integer
+          description: Number of hard braking events
+        harshCorneringCount:
+          type: integer
+          description: Number of hard cornering events
+        totalEvents:
+          type: integer
+          description: Total scored driving behavior events
+        score:
+          type: integer
+          description: Driver performance score from 0 to 100
     ReportTrips:
       type: object
       properties:
