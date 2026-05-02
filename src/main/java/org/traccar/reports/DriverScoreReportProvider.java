@@ -17,6 +17,7 @@ package org.traccar.reports;
 
 import jakarta.inject.Inject;
 import org.traccar.helper.model.DeviceUtil;
+import org.traccar.helper.model.PositionUtil;
 import org.traccar.model.Device;
 import org.traccar.model.Event;
 import org.traccar.model.Position;
@@ -77,6 +78,24 @@ public class DriverScoreReportProvider {
         }
     }
 
+    private void addDistance(Map<String, DriverScoreReportItem> items, Device device, Date from, Date to)
+            throws StorageException {
+
+        Position previous = null;
+        try (var positions = PositionUtil.getPositionsStream(storage, device.getId(), from, to)) {
+            var iterator = positions.iterator();
+            while (iterator.hasNext()) {
+                Position position = iterator.next();
+                if (previous != null) {
+                    DriverScoreReportItem item = getItem(items, device, previous);
+                    item.addDistance(Math.max(0.0, position.getDouble(Position.KEY_TOTAL_DISTANCE)
+                            - previous.getDouble(Position.KEY_TOTAL_DISTANCE)));
+                }
+                previous = position;
+            }
+        }
+    }
+
     private boolean isScoredAlarm(String alarm) {
         return Position.ALARM_ACCELERATION.equals(alarm)
                 || Position.ALARM_BRAKING.equals(alarm)
@@ -87,7 +106,7 @@ public class DriverScoreReportProvider {
             Map<String, DriverScoreReportItem> items, Device device, Position position) throws StorageException {
 
         String driverUniqueId = position != null ? position.getString(Position.KEY_DRIVER_UNIQUE_ID) : null;
-        String key = driverUniqueId != null ? driverUniqueId : NO_DRIVER + device.getId();
+        String key = device.getId() + ":" + (driverUniqueId != null ? driverUniqueId : NO_DRIVER);
         DriverScoreReportItem item = items.get(key);
         if (item == null) {
             item = new DriverScoreReportItem();
@@ -108,6 +127,7 @@ public class DriverScoreReportProvider {
         Map<String, DriverScoreReportItem> result = new LinkedHashMap<>();
 
         for (Device device: DeviceUtil.getAccessibleDevices(storage, userId, deviceIds, groupIds)) {
+            addDistance(result, device, from, to);
             for (Event event : getEvents(device.getId(), from, to)) {
                 String alarm = event.getString(Position.KEY_ALARM);
                 if (isScoredAlarm(alarm)) {

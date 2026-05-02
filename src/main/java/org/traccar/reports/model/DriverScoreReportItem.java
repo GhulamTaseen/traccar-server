@@ -17,10 +17,13 @@ package org.traccar.reports.model;
 
 public class DriverScoreReportItem {
 
-    public static final int DEFAULT_SCORE = 100;
-    public static final int ACCELERATION_PENALTY = 5;
-    public static final int BRAKING_PENALTY = 5;
-    public static final int CORNERING_PENALTY = 5;
+    private static final double DEFAULT_SCORE = 100.0;
+    private static final double MINIMUM_NORMALIZED_DISTANCE = 10000.0;
+    private static final double ACCELERATION_WEIGHT = 1.0;
+    private static final double BRAKING_WEIGHT = 1.5;
+    private static final double CORNERING_WEIGHT = 1.3;
+    private static final double NORMALIZED_RISK_PENALTY = 2.0;
+    private static final double FALLBACK_RISK_PENALTY = 5.0;
 
     private long deviceId;
 
@@ -104,15 +107,48 @@ public class DriverScoreReportItem {
         harshCorneringCount++;
     }
 
+    private double distance;
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public void addDistance(double distance) {
+        this.distance += distance;
+    }
+
     public int getTotalEvents() {
         return harshAccelerationCount + harshBrakingCount + harshCorneringCount;
     }
 
+    public double getRiskScore() {
+        return harshAccelerationCount * ACCELERATION_WEIGHT
+                + harshBrakingCount * BRAKING_WEIGHT
+                + harshCorneringCount * CORNERING_WEIGHT;
+    }
+
+    public double getEventsPer100Km() {
+        if (distance > 0.0) {
+            return getTotalEvents() * 100000.0 / Math.max(distance, MINIMUM_NORMALIZED_DISTANCE);
+        }
+        return 0.0;
+    }
+
+    public double getRiskPer100Km() {
+        if (distance > 0.0) {
+            return getRiskScore() * 100000.0 / Math.max(distance, MINIMUM_NORMALIZED_DISTANCE);
+        }
+        return 0.0;
+    }
+
     public int getScore() {
-        int penalty = harshAccelerationCount * ACCELERATION_PENALTY
-                + harshBrakingCount * BRAKING_PENALTY
-                + harshCorneringCount * CORNERING_PENALTY;
-        return Math.max(0, DEFAULT_SCORE - penalty);
+        double penalty;
+        if (distance > 0.0) {
+            penalty = getRiskPer100Km() * NORMALIZED_RISK_PENALTY;
+        } else {
+            penalty = getRiskScore() * FALLBACK_RISK_PENALTY;
+        }
+        return (int) Math.round(Math.max(0.0, DEFAULT_SCORE - penalty));
     }
 
 }

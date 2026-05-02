@@ -1378,7 +1378,7 @@ paths:
   /reports/driver-score:
     get:
       summary: Fetch driver performance scores
-      description: Calculates scores from hard acceleration, hard braking, and hard cornering alarm events
+      description: Calculates distance-normalized scores from hard acceleration, hard braking, and hard cornering alarm events
       tags:
         - Reports
       parameters:
@@ -2536,12 +2536,24 @@ components:
         harshCorneringCount:
           type: integer
           description: Number of hard cornering events
+        distance:
+          type: number
+          description: Distance travelled in meters during the report period
         totalEvents:
           type: integer
           description: Total scored driving behavior events
+        riskScore:
+          type: number
+          description: Weighted risk points before distance normalization
+        eventsPer100Km:
+          type: number
+          description: Total scored events normalized per 100 km
+        riskPer100Km:
+          type: number
+          description: Weighted risk points normalized per 100 km
         score:
           type: integer
-          description: Driver performance score from 0 to 100
+          description: Driver performance score from 0 to 100 using weighted risk per 100 km
     ReportTrips:
       type: object
       properties:
