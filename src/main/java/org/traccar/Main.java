@@ -42,6 +42,8 @@ public final class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     private static Injector injector;
+    private static String configFile;
+    private static List<LifecycleObject> services = new ArrayList<>();
 
     public static Injector getInjector() {
         return injector;
@@ -78,7 +80,6 @@ public final class Main {
     public static void main(String[] args) throws Exception {
         Locale.setDefault(Locale.ENGLISH);
 
-        final String configFile;
         if (args.length <= 0) {
             configFile = "./debug.xml";
             if (!new File(configFile).exists()) {
@@ -87,6 +88,11 @@ public final class Main {
         } else {
             configFile = args[args.length - 1];
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOGGER.info("Stopping server...");
+            stopServices();
+        }));
 
         if (args.length > 0 && args[0].startsWith("--")) {
             WindowsService windowsService = new WindowsService("traccar") {
@@ -114,35 +120,25 @@ public final class Main {
 
     public static void run(String configFile) {
         try {
+            Main.configFile = configFile;
             injector = Guice.createInjector(new MainModule(configFile), new DatabaseModule(), new WebModule());
             logSystemInfo();
             LOGGER.info("Version: {}", Main.class.getPackage().getImplementationVersion());
             LOGGER.info("Starting server...");
 
-            var services = new ArrayList<LifecycleObject>();
-            for (var clazz : List.of(
-                    ScheduleManager.class, ServerManager.class, WebServer.class, BroadcastService.class)) {
-                var service = injector.getInstance(clazz);
-                if (service != null) {
-                    service.start();
-                    services.add(service);
+            synchronized (services) {
+                services.clear();
+                for (var clazz : List.of(
+                        ScheduleManager.class, ServerManager.class, WebServer.class, BroadcastService.class)) {
+                    var service = injector.getInstance(clazz);
+                    if (service != null) {
+                        service.start();
+                        services.add(service);
+                    }
                 }
             }
 
             Thread.setDefaultUncaughtExceptionHandler((t, e) -> LOGGER.error("Thread exception", e));
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                LOGGER.info("Stopping server...");
-
-                for (var service : services) {
-                    try {
-                        service.stop();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                injector.getInstance(ExecutorService.class).shutdown();
-            }));
         } catch (Exception e) {
             Throwable unwrapped;
             if (e instanceof ProvisionException) {
@@ -153,6 +149,42 @@ public final class Main {
             LOGGER.error("Main method error", unwrapped);
             System.exit(1);
         }
+    }
+
+    private static void stopServices() {
+        synchronized (services) {
+            for (var service : services) {
+                try {
+                    service.stop();
+                } catch (Exception e) {
+                    LOGGER.error("Error stopping service", e);
+                }
+            }
+            services.clear();
+        }
+        if (injector != null) {
+            try {
+                injector.getInstance(ExecutorService.class).shutdown();
+            } catch (Exception e) {
+                LOGGER.error("Error shutting down executor", e);
+            }
+        }
+    }
+
+    public static void restart() {
+        new Thread(() -> {
+            try {
+                LOGGER.info("Server restart initiated...");
+                Thread.sleep(500);
+                stopServices();
+                LOGGER.info("Services stopped, reinitializing...");
+                Thread.sleep(2000);
+                run(configFile);
+                LOGGER.info("Server restarted successfully");
+            } catch (Exception e) {
+                LOGGER.error("Restart failed", e);
+            }
+        }, "restart-thread").start();
     }
 
 }

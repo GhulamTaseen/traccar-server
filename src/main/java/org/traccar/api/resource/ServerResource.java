@@ -17,6 +17,7 @@ package org.traccar.api.resource;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Context;
+import org.traccar.Main;
 import org.traccar.api.BaseResource;
 import org.traccar.model.ObjectOperation;
 import org.traccar.config.Config;
@@ -179,9 +180,10 @@ public class ServerResource extends BaseResource {
 
     @Path("reboot")
     @POST
-    public void reboot() throws StorageException {
+    public Response reboot() throws StorageException {
         permissionsService.checkAdmin(getUserId());
-        System.exit(130);
+        Main.restart();
+        return Response.ok().build();
     }
 
 }
